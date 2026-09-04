@@ -4,7 +4,6 @@ name: collect
 #
 #   */5 * * * *   방송 상태 + 시청자 스냅샷  (GitHub Actions 최소 간격이 5분)
 #   */30 * * * *  다시보기 / 클립 / 캐치
-#   0 19 * * *    클릭 일일 집계 (UTC 19:00 = KST 04:00)
 #
 # 필요한 설정 (Settings > Secrets and variables > Actions)
 #   Variables: COLLECT_BASE_URL   예) https://hadesdate.vercel.app
@@ -17,7 +16,6 @@ on:
   schedule:
     - cron: "*/5 * * * *"
     - cron: "*/30 * * * *"
-    - cron: "0 19 * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -25,7 +23,7 @@ on:
         required: true
         default: sync
         type: choice
-        options: [sync, vods, rollup]
+        options: [sync, vods]
 
 concurrency:
   group: collect-${{ github.event.schedule || github.event.inputs.mode }}
@@ -54,7 +52,6 @@ jobs:
 
           case "${{ github.event.schedule }}" in
             "*/30 * * * *") MODE=vods ;;
-            "0 19 * * *")   MODE=rollup ;;
             "*/5 * * * *")  MODE=sync ;;
             *)              MODE="${{ github.event.inputs.mode || 'sync' }}" ;;
           esac
