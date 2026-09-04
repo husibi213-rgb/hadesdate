@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3,
   CalendarDays,
   LayoutDashboard,
   Megaphone,
@@ -24,7 +23,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/members", label: "멤버", icon: Users, mobile: true },
   { href: "/broadcasts", label: "방송", icon: Radio, mobile: true },
   { href: "/calendar", label: "캘린더", icon: CalendarDays },
-  { href: "/analytics", label: "통계", icon: BarChart3, mobile: true },
   { href: "/catches", label: "캐치", icon: Scissors, mobile: true },
   { href: "/clicks", label: "클릭", icon: MousePointerClick },
   { href: "/notices", label: "공지", icon: Megaphone },

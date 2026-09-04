@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Clock, Eye, Radio, Scissors, TrendingUp, Users } from "lucide-react";
 
@@ -12,12 +13,14 @@ import { SetupNotice } from "@/components/ui/setup-notice";
 import { BroadcastListItem } from "@/components/broadcasts/broadcast-list-item";
 import { BroadcastCalendar } from "@/components/members/broadcast-calendar";
 import { DailySeriesChart } from "@/components/charts/daily-series-chart";
+import { Table, TableWrap, Td, Th, Tr } from "@/components/ui/table";
 
 import { getMember, getMemberDailySeries, getMemberStats } from "@/lib/queries/members";
 import { getBroadcastsPage } from "@/lib/queries/broadcasts";
 import { buildPeriodTabs, chartRange, periodRange } from "@/lib/utils/period";
 import { todayKey } from "@/lib/utils/dates";
-import { formatHours, formatNumber } from "@/lib/utils/format";
+import { groupMemberSeriesByMonth } from "@/lib/utils/monthly";
+import { formatDurationShort, formatHours, formatNumber } from "@/lib/utils/format";
 
 interface Props {
   params: Promise<{ memberId: string }>;
@@ -47,7 +50,7 @@ export default async function MemberDetailPage({ params, searchParams }: Props) 
   if (!member) notFound();
 
   const range = periodRange(period);
-  const chart = chartRange(range, 180);
+  const chart = chartRange(range, 365);
   const slug = member.slug ?? member.id;
   const basePath = `/members/${slug}`;
 
@@ -71,6 +74,11 @@ export default async function MemberDetailPage({ params, searchParams }: Props) 
     avgViewers: p.avg_viewers,
     peakViewers: p.peak_viewers,
   }));
+
+  // 통계 페이지를 없애면서 월별 종합을 여기로 옮겨 왔다.
+  const monthlyRows = groupMemberSeriesByMonth(series.data).filter(
+    (row) => row.broadcastCount > 0
+  );
 
   const calendarDays = calendarSeries.data.map((p) => ({
     dateKey: p.stat_date,
@@ -152,6 +160,48 @@ export default async function MemberDetailPage({ params, searchParams }: Props) 
             )}
           </CardContent>
         </Card>
+      </Section>
+
+      <Section title="월별 종합" description="방송이 있었던 달만 표시합니다">
+        {monthlyRows.length === 0 ? (
+          <EmptyState title="집계할 방송 기록이 없습니다" />
+        ) : (
+          <TableWrap>
+            <Table className="min-w-[560px]">
+              <thead>
+                <tr>
+                  <Th>월</Th>
+                  <Th className="text-right">방송일</Th>
+                  <Th className="text-right">방송</Th>
+                  <Th className="text-right">방송시간</Th>
+                  <Th className="text-right">평균 시청자</Th>
+                  <Th className="text-right">최고 시청자</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthlyRows.map((row) => (
+                  <Tr key={row.monthKey}>
+                    <Td>
+                      <Link
+                        href={`${basePath}?period=${range.key}&y=${row.year}&m=${String(row.month).padStart(2, "0")}`}
+                        className="font-medium text-fg transition-colors hover:text-accent"
+                      >
+                        {row.year}년 {row.month}월
+                      </Link>
+                    </Td>
+                    <Td className="tnum text-right">{formatNumber(row.activeDays)}일</Td>
+                    <Td className="tnum text-right">{formatNumber(row.broadcastCount)}회</Td>
+                    <Td className="tnum text-right">
+                      {formatDurationShort(row.durationSeconds)}
+                    </Td>
+                    <Td className="tnum text-right">{formatNumber(row.avgViewers)}</Td>
+                    <Td className="tnum text-right">{formatNumber(row.peakViewers)}</Td>
+                  </Tr>
+                ))}
+              </tbody>
+            </Table>
+          </TableWrap>
+        )}
       </Section>
 
       <div className="grid gap-8 xl:grid-cols-[1fr_1.3fr]">
