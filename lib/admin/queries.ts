@@ -35,7 +35,6 @@ export interface AdminOverview {
   viewerSnapshots: number;
   catches: number;
   notices: number;
-  clickEvents: number;
   /** 가장 최근 시청자 스냅샷 시각 — 수집기가 살아 있는지 판단용 */
   lastSnapshotAt: string | null;
   /** 가장 최근 방송 시작 시각 */
@@ -47,13 +46,12 @@ export interface AdminOverview {
 export async function getAdminOverview(): Promise<AdminOverview> {
   const supabase = createAdminClient();
 
-  const [members, broadcasts, viewerSnapshots, catches, notices, clickEvents] = await Promise.all([
+  const [members, broadcasts, viewerSnapshots, catches, notices] = await Promise.all([
     countRows(supabase, "members"),
     countRows(supabase, "broadcasts"),
     countRows(supabase, "viewer_snapshots"),
     countRows(supabase, "catches"),
     countRows(supabase, "notices"),
-    countRows(supabase, "click_events"),
   ]);
 
   const live = unwrapAdmin<{ id: string }>(
@@ -85,7 +83,6 @@ export async function getAdminOverview(): Promise<AdminOverview> {
     viewerSnapshots,
     catches,
     notices,
-    clickEvents,
     lastSnapshotAt,
     lastBroadcastAt: lastBroadcast[0]?.started_at ?? null,
     snapshotAgeMinutes: lastSnapshotAt

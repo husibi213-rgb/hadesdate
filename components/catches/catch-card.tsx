@@ -1,6 +1,6 @@
+import { SmartLink } from "@/components/ui/smart-link";
 import { ExternalLink, Eye, Heart, Play } from "lucide-react";
 
-import { TrackedLink } from "@/components/analytics/tracked-link";
 import type { CatchWithMember } from "@/lib/queries/catches";
 import { formatDate } from "@/lib/utils/dates";
 import { formatNumber, formatTimestamp } from "@/lib/utils/format";
@@ -12,13 +12,9 @@ import { formatNumber, formatTimestamp } from "@/lib/utils/format";
 export function CatchCard({ item }: { item: CatchWithMember }) {
   return (
     <article className="group overflow-hidden rounded-xl border border-border bg-surface/70 transition-colors hover:border-border-strong">
-      <TrackedLink
+      <SmartLink
         href={item.catch_url}
         external
-        targetType="catch"
-        targetId={item.id}
-        memberId={item.member_id}
-        broadcastId={item.broadcast_id}
         className="relative block aspect-video overflow-hidden bg-surface-3"
       >
         {item.thumbnail_url ? (
@@ -42,7 +38,7 @@ export function CatchCard({ item }: { item: CatchWithMember }) {
         <span className="absolute top-2 right-2 rounded bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100">
           <ExternalLink className="size-3" />
         </span>
-      </TrackedLink>
+      </SmartLink>
 
       <div className="space-y-1.5 p-3">
         <p className="line-clamp-2 text-[13px] leading-snug font-medium text-fg">
@@ -51,15 +47,12 @@ export function CatchCard({ item }: { item: CatchWithMember }) {
 
         <div className="flex items-center justify-between gap-2 text-[11px] text-fg-muted">
           {item.member ? (
-            <TrackedLink
+            <SmartLink
               href={`/members/${item.member.slug ?? item.member.id}`}
-              targetType="profile"
-              targetId={item.member.id}
-              memberId={item.member.id}
               className="truncate transition-colors hover:text-fg"
             >
               {item.member.name}
-            </TrackedLink>
+            </SmartLink>
           ) : (
             <span />
           )}
@@ -78,16 +71,12 @@ export function CatchCard({ item }: { item: CatchWithMember }) {
             {formatNumber(item.likes)}
           </span>
           {item.broadcast_id ? (
-            <TrackedLink
+            <SmartLink
               href={`/broadcasts/${item.broadcast_id}`}
-              targetType="broadcast"
-              targetId={item.broadcast_id}
-              memberId={item.member_id}
-              broadcastId={item.broadcast_id}
               className="ml-auto transition-colors hover:text-fg"
             >
               방송 보기
-            </TrackedLink>
+            </SmartLink>
           ) : null}
         </div>
       </div>

@@ -57,6 +57,8 @@ export interface ViewerSnapshotRow {
   followers: number | null;
 }
 
+export type CatchKind = "clip" | "catch";
+
 export interface CatchRow {
   id: string;
   broadcast_id: string | null;
@@ -73,6 +75,8 @@ export interface CatchRow {
   created_at: string;
   /** 캐치 발생 날짜(KST). generated column. */
   catch_date: string;
+  /** clip = 유저클립(별풍선 클립), catch = SOOP 캐치 */
+  kind: CatchKind;
 }
 
 export interface ClickEventRow {

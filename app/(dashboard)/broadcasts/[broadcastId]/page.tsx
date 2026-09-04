@@ -1,6 +1,6 @@
-import Link from "next/link";
+import { SmartLink } from "@/components/ui/smart-link";
 import { notFound } from "next/navigation";
-import { ExternalLink, Eye, Heart, MousePointerClick, TrendingUp, UserPlus, Users } from "lucide-react";
+import { ExternalLink, Eye, Heart, TrendingUp, UserPlus, Users } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { MemberAvatar } from "@/components/ui/member-avatar";
@@ -13,16 +13,13 @@ import { SetupNotice } from "@/components/ui/setup-notice";
 import { CatchCard } from "@/components/catches/catch-card";
 import { NoticeCard } from "@/components/notices/notice-card";
 import { ViewerAreaChart } from "@/components/charts/viewer-area-chart";
-import { TrackedLink } from "@/components/analytics/tracked-link";
 
 import {
   getBroadcast,
-  getBroadcastClickBreakdown,
   getViewerSnapshots,
 } from "@/lib/queries/broadcasts";
 import { getCatchesForBroadcast } from "@/lib/queries/catches";
 import { getRelatedNotices } from "@/lib/queries/notices";
-import { CLICK_TARGET_LABELS } from "@/lib/constants";
 import { formatDate, formatTime } from "@/lib/utils/dates";
 import { formatDuration, formatNumber } from "@/lib/utils/format";
 
@@ -53,16 +50,14 @@ export default async function BroadcastDetailPage({ params }: Props) {
   const broadcast = result.data;
   if (!broadcast) notFound();
 
-  const [snapshots, catches, clicks, notices] = await Promise.all([
+  const [snapshots, catches, notices] = await Promise.all([
     getViewerSnapshots(broadcast.id),
     getCatchesForBroadcast(broadcast.id),
-    getBroadcastClickBreakdown(broadcast.id),
     getRelatedNotices(broadcast.member_id, broadcast.broadcast_date),
   ]);
 
   const isLive = broadcast.status === "live";
   const chartData = snapshots.data.map((s) => ({ t: s.recorded_at, viewers: s.viewers }));
-  const totalClicks = clicks.data.reduce((sum, row) => sum + row.click_count, 0);
   const [yy, mm, dd] = broadcast.broadcast_date.split("-");
 
   return (
@@ -80,16 +75,12 @@ export default async function BroadcastDetailPage({ params }: Props) {
               <span className="block truncate">{broadcast.title ?? "제목 없음"}</span>
               <span className="mt-0.5 flex items-center gap-2 text-xs font-normal text-fg-muted">
                 {broadcast.member ? (
-                  <TrackedLink
+                  <SmartLink
                     href={`/members/${broadcast.member.slug ?? broadcast.member.id}`}
-                    targetType="profile"
-                    targetId={broadcast.member.id}
-                    memberId={broadcast.member.id}
-                    broadcastId={broadcast.id}
                     className="transition-colors hover:text-fg"
                   >
                     {broadcast.member.name}
-                  </TrackedLink>
+                  </SmartLink>
                 ) : null}
                 {isLive ? <LiveBadge /> : null}
               </span>
@@ -98,9 +89,9 @@ export default async function BroadcastDetailPage({ params }: Props) {
         }
         description={
           <span className="tnum">
-            <Link href={`/calendar/${yy}/${mm}/${dd}`} className="hover:text-fg">
+            <SmartLink href={`/calendar/${yy}/${mm}/${dd}`} className="hover:text-fg">
               {formatDate(broadcast.started_at)}
-            </Link>{" "}
+            </SmartLink>{" "}
             · {formatTime(broadcast.started_at)}
             {broadcast.ended_at ? ` ~ ${formatTime(broadcast.ended_at)}` : " ~ 진행 중"} ·{" "}
             {formatDuration(broadcast.duration_seconds)}
@@ -108,18 +99,14 @@ export default async function BroadcastDetailPage({ params }: Props) {
         }
         actions={
           broadcast.vod_url ? (
-            <TrackedLink
+            <SmartLink
               href={broadcast.vod_url}
               external
-              targetType="vod"
-              targetId={broadcast.id}
-              memberId={broadcast.member_id}
-              broadcastId={broadcast.id}
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface/60 px-2.5 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-border-strong hover:text-fg"
             >
               VOD 보기
               <ExternalLink className="size-3" />
-            </TrackedLink>
+            </SmartLink>
           ) : null
         }
       />
@@ -179,41 +166,6 @@ export default async function BroadcastDetailPage({ params }: Props) {
       </Section>
 
       <div className="grid gap-8 xl:grid-cols-2">
-        <Section title="유저 클릭" description="익명 집계 · 개별 사용자는 식별하지 않습니다">
-          {clicks.data.length === 0 ? (
-            <EmptyState title="클릭 데이터가 없습니다" icon={<MousePointerClick className="size-5" />} />
-          ) : (
-            <Card>
-              <CardContent className="space-y-2 pt-4">
-                {clicks.data.map((row) => {
-                  const ratio = totalClicks > 0 ? (row.click_count / totalClicks) * 100 : 0;
-                  return (
-                    <div key={row.target_type} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-fg-muted">
-                          {CLICK_TARGET_LABELS[row.target_type] ?? row.target_type}
-                        </span>
-                        <span className="tnum font-medium text-fg">
-                          {formatNumber(row.click_count)}
-                        </span>
-                      </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-surface-3">
-                        <div
-                          className="h-full rounded-full bg-accent"
-                          style={{ width: `${ratio}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-                <p className="tnum pt-1 text-[11px] text-fg-dim">
-                  총 {formatNumber(totalClicks)}회
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </Section>
-
         <Section title="관련 공지" href="/notices">
           {notices.data.length === 0 ? (
             <EmptyState title="관련 공지가 없습니다" />

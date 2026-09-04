@@ -149,6 +149,7 @@ async function collectForMember(
           "catches",
           {
             title: clip.title,
+            kind: clip.kind,
             thumbnail_url: clip.thumbnailUrl,
             views,
             likes: clip.likeCount,
@@ -165,6 +166,7 @@ async function collectForMember(
         broadcast_id: match?.id ?? null,
         external_id: clip.titleNo,
         title: clip.title,
+        kind: clip.kind,
         catch_url: clip.url,
         thumbnail_url: clip.thumbnailUrl,
         broadcast_timestamp: offset,

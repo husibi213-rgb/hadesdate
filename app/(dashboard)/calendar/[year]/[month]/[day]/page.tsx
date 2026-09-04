@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight, Clock, Megaphone, MousePointerClick, Radio, Scissors, TrendingUp, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Megaphone, Radio, Scissors, TrendingUp, Users } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -155,11 +155,6 @@ export default async function DailyArchivePage({ params }: Props) {
           label="캐치"
           value={formatNumber(summary.data.catch_count)}
           icon={<Scissors className="size-3.5" />}
-        />
-        <StatCard
-          label="클릭"
-          value={formatNumber(summary.data.click_count)}
-          icon={<MousePointerClick className="size-3.5" />}
         />
       </div>
 

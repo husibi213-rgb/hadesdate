@@ -1,3 +1,4 @@
+import { SmartLink } from "@/components/ui/smart-link";
 import { ExternalLink, Megaphone, Radio, Scissors, Search, Users } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
@@ -5,7 +6,6 @@ import { SearchBox } from "@/components/layout/search-box";
 import { Section } from "@/components/ui/section";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { SetupNotice } from "@/components/ui/setup-notice";
-import { TrackedLink } from "@/components/analytics/tracked-link";
 import { formatNumber } from "@/lib/utils/format";
 import { searchAll } from "@/lib/queries/search";
 import type { SearchKind, SearchResultRow } from "@/types/database";
@@ -101,12 +101,10 @@ export default async function SearchPage({
               >
                 <div className="space-y-2">
                   {rows.map((row) => (
-                    <TrackedLink
+                    <SmartLink
                       key={`${row.kind}-${row.id}`}
                       href={row.href}
                       external={group.external}
-                      targetType={row.kind === "member" ? "profile" : row.kind}
-                      targetId={row.id}
                       className="flex items-center gap-3 rounded-xl border border-border bg-surface/70 px-3.5 py-3 transition-colors hover:border-border-strong hover:bg-surface-2/60"
                     >
                       <span className="shrink-0 text-fg-dim">{group.icon}</span>
@@ -130,7 +128,7 @@ export default async function SearchPage({
                       {group.external ? (
                         <ExternalLink className="size-3 shrink-0 text-fg-dim" />
                       ) : null}
-                    </TrackedLink>
+                    </SmartLink>
                   ))}
                 </div>
               </Section>

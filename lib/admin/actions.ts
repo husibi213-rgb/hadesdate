@@ -18,7 +18,6 @@ import {
 } from "@/lib/admin/session";
 import { runSync } from "@/lib/collect/run-sync";
 import { runVodsCollect } from "@/lib/collect/run-vods";
-import { runRollup } from "@/lib/collect/run-rollup";
 import { fromDateTimeInput } from "@/lib/utils/datetime-input";
 import {
   checked,
@@ -267,15 +266,6 @@ export async function triggerVods(): Promise<never> {
   });
 }
 
-export async function triggerRollup(): Promise<never> {
-  return run("/admin", "클릭 집계", async () => {
-    const result = await runRollup();
-    const failed = result.days.filter((d) => d.error);
-    const rows = result.days.reduce((sum, d) => sum + d.rows, 0);
-    const detail = failed.length ? ` · 실패 ${failed.map((d) => d.date).join(", ")}` : "";
-    return `클릭 집계 완료 — ${result.days.map((d) => d.date).join(", ")} · ${rows}행${detail}`;
-  });
-}
 
 /* ------------------------------ 오류 로그 ----------------------------- */
 

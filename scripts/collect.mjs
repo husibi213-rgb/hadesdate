@@ -5,7 +5,6 @@
  *   node scripts/collect.mjs              방송 상태 동기화 (1~3분 간격 권장)
  *   node scripts/collect.mjs vods         다시보기/클립/캐치 수집 (30분~1시간 간격 권장)
  *   node scripts/collect.mjs vods 3       페이지 수 지정
- *   node scripts/collect.mjs rollup       클릭 일일 집계 (하루 1회 권장)
  *
  * 환경변수
  *   COLLECT_BASE_URL  기본값 http://localhost:3000
@@ -16,12 +15,11 @@ const base = (process.env.COLLECT_BASE_URL ?? "http://localhost:3000").replace(/
 const secret = process.env.COLLECT_SECRET ?? "";
 
 const arg = process.argv[2];
-const mode = arg === "vods" || arg === "rollup" ? arg : "sync";
+const mode = arg === "vods" ? arg : "sync";
 const pages = Number(process.argv[3]) || null;
 
 const url = {
   vods: `${base}/api/collect/vods${pages ? `?pages=${pages}` : ""}`,
-  rollup: `${base}/api/collect/rollup`,
   sync: `${base}/api/collect/sync`,
 }[mode];
 
@@ -44,13 +42,7 @@ try {
   const results = body.results ?? [];
   const errors = results.filter((r) => r.error || r.status === "error");
 
-  if (mode === "rollup") {
-    for (const day of body.days ?? []) {
-      console.log(
-        `[collect:rollup] ${day.date} · ${day.rows}행` + (day.error ? ` · 오류 ${day.error}` : "")
-      );
-    }
-  } else if (mode === "sync") {
+  if (mode === "sync") {
     const live = results.filter((r) => r.status === "live");
     console.log(
       `[collect:sync] ${body.syncedAt} · LIVE ${live.length}명` +

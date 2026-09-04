@@ -1,12 +1,13 @@
 "use client";
 
+import Link from "next/link";
+
 import { useEffect, useState } from "react";
 import type { BroadcastWithMember } from "@/lib/queries/broadcasts";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import { LiveBadge } from "@/components/ui/badge";
 import { elapsedSeconds, formatTime } from "@/lib/utils/dates";
 import { formatDurationShort, formatNumber } from "@/lib/utils/format";
-import { TrackedLink } from "@/components/analytics/tracked-link";
 
 export function LiveBroadcastCard({ broadcast }: { broadcast: BroadcastWithMember }) {
   // 방송시간은 클라이언트에서 흐르게 한다.
@@ -18,12 +19,8 @@ export function LiveBroadcastCard({ broadcast }: { broadcast: BroadcastWithMembe
   }, [broadcast.started_at]);
 
   return (
-    <TrackedLink
+    <Link
       href={`/broadcasts/${broadcast.id}`}
-      targetType="broadcast"
-      targetId={broadcast.id}
-      memberId={broadcast.member_id}
-      broadcastId={broadcast.id}
       className="group flex flex-col gap-3 rounded-xl border border-live/25 bg-surface/70 p-4 transition-colors hover:border-live/50"
     >
       <div className="flex items-start gap-3">
@@ -51,7 +48,7 @@ export function LiveBroadcastCard({ broadcast }: { broadcast: BroadcastWithMembe
         <Metric label="방송시간" value={formatDurationShort(elapsed)} />
         <Metric label="시작" value={formatTime(broadcast.started_at)} />
       </div>
-    </TrackedLink>
+    </Link>
   );
 }
 

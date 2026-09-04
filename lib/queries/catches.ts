@@ -3,12 +3,12 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { guard, unwrap, type QueryResult } from "@/lib/queries/result";
 import { CATCH_PAGE_SIZE, type CatchSortKey } from "@/lib/constants";
-import type { CatchRow } from "@/types/database";
+import type { CatchKind, CatchRow } from "@/types/database";
 import type { MemberBrief } from "@/lib/queries/broadcasts";
 
 const CATCH_FIELDS = `
   id, broadcast_id, member_id, title, description, catch_url, thumbnail_url,
-  broadcast_timestamp, views, likes, external_id, published_at, created_at, catch_date
+  broadcast_timestamp, views, likes, external_id, published_at, created_at, catch_date, kind
 `;
 
 const WITH_MEMBER = `${CATCH_FIELDS}, member:members!inner(id, name, slug, profile_image_url, color)`;
@@ -30,6 +30,8 @@ export interface CatchListParams {
   sort?: CatchSortKey;
   from?: string | null;
   to?: string | null;
+  /** 캐치 / 유저클립 구분. 없으면 종류를 가리지 않는다. */
+  kind?: CatchKind | null;
 }
 
 export interface CatchPage {
@@ -52,6 +54,7 @@ export async function getCatchesPage(
       .order(sort.column, { ascending: sort.ascending, nullsFirst: false })
       .range((page - 1) * pageSize, page * pageSize);
 
+    if (params.kind) query = query.eq("kind", params.kind);
     if (params.memberId) query = query.eq("member_id", params.memberId);
     if (params.from) query = query.gte("catch_date", params.from);
     if (params.to) query = query.lte("catch_date", params.to);
@@ -116,6 +119,7 @@ export async function getCatchesForGrouping(params: {
   from: string;
   to: string;
   memberId?: string | null;
+  kind?: CatchKind | null;
   limit?: number;
 }): Promise<QueryResult<CatchWithMember[]>> {
   return guard<CatchWithMember[]>([], async () => {
@@ -129,6 +133,7 @@ export async function getCatchesForGrouping(params: {
       .order("views", { ascending: false })
       .limit(params.limit ?? 200);
 
+    if (params.kind) query = query.eq("kind", params.kind);
     if (params.memberId) query = query.eq("member_id", params.memberId);
 
     return unwrap<CatchWithMember[]>(await query);

@@ -1,4 +1,4 @@
-import type { ClickTargetType, NoticeSource } from "@/types/database";
+import type { NoticeSource } from "@/types/database";
 
 /** 기간 필터 프리셋 */
 export const PERIOD_PRESETS = [
@@ -22,15 +22,6 @@ export function periodDays(key: PeriodKey): number | null {
   return PERIOD_PRESETS.find((p) => p.key === key)?.days ?? null;
 }
 
-export const CLICK_TARGET_LABELS: Record<ClickTargetType, string> = {
-  broadcast: "방송 페이지",
-  member: "멤버",
-  catch: "캐치",
-  vod: "VOD",
-  profile: "프로필",
-  notice: "공지",
-  external: "외부 링크",
-};
 
 export const NOTICE_SOURCE_LABELS: Record<NoticeSource, string> = {
   cafe: "카페",

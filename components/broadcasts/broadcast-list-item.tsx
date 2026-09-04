@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { Eye, Users } from "lucide-react";
 
-import { TrackedLink } from "@/components/analytics/tracked-link";
 import type { BroadcastWithMember } from "@/lib/queries/broadcasts";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import { LiveBadge } from "@/components/ui/badge";
@@ -19,12 +19,8 @@ export function BroadcastListItem({
   const isLive = broadcast.status === "live";
 
   return (
-    <TrackedLink
+    <Link
       href={`/broadcasts/${broadcast.id}`}
-      targetType="broadcast"
-      targetId={broadcast.id}
-      memberId={broadcast.member_id}
-      broadcastId={broadcast.id}
       className="flex items-center gap-3 rounded-xl border border-border bg-surface/70 px-3.5 py-3 transition-colors hover:border-border-strong hover:bg-surface-2/60"
     >
       {showMember && broadcast.member ? (
@@ -67,6 +63,6 @@ export function BroadcastListItem({
           {formatNumber(broadcast.views)}
         </div>
       </div>
-    </TrackedLink>
+    </Link>
   );
 }

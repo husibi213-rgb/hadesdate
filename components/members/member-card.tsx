@@ -1,8 +1,8 @@
+import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 import type { MemberRow } from "@/types/database";
 
-import { TrackedLink } from "@/components/analytics/tracked-link";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import { LiveBadge } from "@/components/ui/badge";
 
@@ -20,11 +20,8 @@ export function MemberCard({
   isLive?: boolean;
 }) {
   return (
-    <TrackedLink
+    <Link
       href={`/members/${member.slug ?? member.id}`}
-      targetType="profile"
-      targetId={member.id}
-      memberId={member.id}
       className="group flex items-center gap-3 rounded-xl border border-border bg-surface/70 p-4 transition-colors hover:border-border-strong hover:bg-surface-2/50"
     >
       <MemberAvatar
@@ -45,6 +42,6 @@ export function MemberCard({
       </div>
 
       <ChevronRight className="size-4 shrink-0 text-fg-dim transition-colors group-hover:text-fg" />
-    </TrackedLink>
+    </Link>
   );
 }

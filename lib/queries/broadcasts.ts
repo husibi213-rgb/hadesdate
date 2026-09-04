@@ -1,11 +1,10 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { callRpc, guard, unwrap, type QueryResult } from "@/lib/queries/result";
+import { guard, unwrap, type QueryResult } from "@/lib/queries/result";
 import { PAGE_SIZE } from "@/lib/constants";
 import type {
   BroadcastRow,
-  ClickBreakdownRow,
   MemberRow,
   ViewerSnapshotRow,
 } from "@/types/database";
@@ -148,16 +147,6 @@ export async function getViewerSnapshots(
   });
 }
 
-export async function getBroadcastClickBreakdown(
-  broadcastId: string
-): Promise<QueryResult<ClickBreakdownRow[]>> {
-  return guard<ClickBreakdownRow[]>([], async () => {
-    const supabase = await createClient();
-    return callRpc<ClickBreakdownRow[]>(supabase, "broadcast_click_breakdown", {
-      p_broadcast_id: broadcastId,
-    });
-  });
-}
 
 export interface DaySummary {
   dateKey: string;

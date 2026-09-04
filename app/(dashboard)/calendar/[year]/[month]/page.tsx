@@ -6,7 +6,6 @@ import {
   ChevronRight,
   Clock,
   Megaphone,
-  MousePointerClick,
   Radio,
   Scissors,
   TrendingUp,
@@ -204,10 +203,10 @@ export default async function MonthlyArchivePage({ params }: Props) {
           icon={<Scissors className="size-3.5" />}
         />
         <StatCard
-          label="클릭"
-          value={formatNumber(summary.data.click_count)}
-          hint={`공지 ${summary.data.notice_count}건`}
-          icon={<MousePointerClick className="size-3.5" />}
+          label="공지"
+          value={formatNumber(summary.data.notice_count)}
+          unit="건"
+          icon={<Megaphone className="size-3.5" />}
         />
       </div>
 

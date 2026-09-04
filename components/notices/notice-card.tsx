@@ -1,7 +1,7 @@
+import { SmartLink } from "@/components/ui/smart-link";
 import { ExternalLink } from "lucide-react";
 import type { NoticeRow } from "@/types/database";
 
-import { TrackedLink } from "@/components/analytics/tracked-link";
 import { Badge } from "@/components/ui/badge";
 import { NOTICE_SOURCE_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils/dates";
@@ -39,15 +39,13 @@ export function NoticeCard({ notice }: { notice: NoticeRow }) {
 
   if (notice.url) {
     return (
-      <TrackedLink
+      <SmartLink
         href={notice.url}
         external
-        targetType="notice"
-        targetId={notice.id}
         className={className}
       >
         {body}
-      </TrackedLink>
+      </SmartLink>
     );
   }
   return <div className={className}>{body}</div>;

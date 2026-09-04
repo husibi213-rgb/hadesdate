@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { AlertTriangle, Database, Megaphone, MousePointerClick, Radio, RefreshCw, Scissors, Users } from "lucide-react";
+import { AlertTriangle, Database, Megaphone, Radio, RefreshCw, Scissors, Users } from "lucide-react";
 
 import { adminGate } from "@/lib/admin/session";
 import { getAdminOverview, getRecentErrorCount } from "@/lib/admin/queries";
 import { loadAdmin } from "@/lib/admin/load";
-import { triggerRollup, triggerSync, triggerVods } from "@/lib/admin/actions";
+import { triggerSync, triggerVods } from "@/lib/admin/actions";
 import { LoginScreen } from "@/components/admin/login-screen";
 import { Button, FormNotice } from "@/components/admin/form";
 import { ErrorState } from "@/components/ui/states";
@@ -33,7 +33,6 @@ export default async function AdminHomePage({
       viewerSnapshots: 0,
       catches: 0,
       notices: 0,
-      clickEvents: 0,
       lastSnapshotAt: null,
       lastBroadcastAt: null,
       snapshotAgeMinutes: null,
@@ -91,11 +90,6 @@ export default async function AdminHomePage({
           value={formatNumber(overview.notices)}
           icon={<Megaphone className="size-3.5" />}
         />
-        <StatCard
-          label="클릭"
-          value={formatNumber(overview.clickEvents)}
-          icon={<MousePointerClick className="size-3.5" />}
-        />
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
@@ -115,12 +109,6 @@ export default async function AdminHomePage({
                 <Button variant="ghost" type="submit" className="inline-flex items-center gap-1.5">
                   <Scissors className="size-3.5" />
                   다시보기·클립·캐치 수집
-                </Button>
-              </form>
-              <form action={triggerRollup}>
-                <Button variant="ghost" type="submit" className="inline-flex items-center gap-1.5">
-                  <MousePointerClick className="size-3.5" />
-                  클릭 집계
                 </Button>
               </form>
             </div>
