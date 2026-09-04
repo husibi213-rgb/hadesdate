@@ -1,6 +1,7 @@
 import "server-only";
 
 import { parseSoopDate } from "@/lib/soop/station";
+import { soopFetchJson } from "@/lib/soop/request";
 
 /**
  * SOOP(숲) 방송국 게시물(다시보기 / 클립 / 캐치) 목록.
@@ -170,19 +171,13 @@ export async function fetchVodPage(
     `${VODS_ENDPOINT}/${encodeURIComponent(channelId)}/vods/catch` +
     `?page=${page}&per_page=${perPage}&orderby=reg_date`;
 
-  const response = await fetch(url, {
-    headers: {
-      accept: "application/json",
-      referer: `https://www.sooplive.com/station/${channelId}/vod`,
-    },
-    cache: "no-store",
-  });
+  const payload = await soopFetchJson(
+    url,
+    `https://www.sooplive.com/station/${channelId}/vod`,
+    `SOOP vods API (${channelId})`
+  );
 
-  if (!response.ok) {
-    throw new Error(`SOOP vods API ${response.status} (${channelId})`);
-  }
-
-  return parseVodPayload((await response.json()) as Json, page);
+  return parseVodPayload(payload as Json, page);
 }
 
 /** 여러 페이지를 이어서 가져온다 (최대 maxPages). */

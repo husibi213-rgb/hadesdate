@@ -13,6 +13,8 @@ import "server-only";
  * 실제 응답 원본은 GET /api/collect/probe?bj={channelId} 로 언제든 확인할 수 있다.
  */
 
+import { soopFetchJson } from "@/lib/soop/request";
+
 const STATION_ENDPOINT = "https://chapi.sooplive.co.kr/api";
 
 export interface SoopStationSnapshot {
@@ -125,18 +127,11 @@ export function parseStationPayload(channelId: string, raw: Json): SoopStationSn
 }
 
 export async function fetchStation(channelId: string): Promise<SoopStationSnapshot> {
-  const response = await fetch(`${STATION_ENDPOINT}/${encodeURIComponent(channelId)}/station`, {
-    headers: {
-      accept: "application/json",
-      // SOOP 은 브라우저 외 요청을 막는 경우가 있어 Referer 를 붙인다.
-      referer: `https://www.sooplive.com/station/${channelId}`,
-    },
-    cache: "no-store",
-  });
+  const payload = await soopFetchJson(
+    `${STATION_ENDPOINT}/${encodeURIComponent(channelId)}/station`,
+    `https://www.sooplive.com/station/${channelId}`,
+    `SOOP station API (${channelId})`
+  );
 
-  if (!response.ok) {
-    throw new Error(`SOOP station API ${response.status} (${channelId})`);
-  }
-
-  return parseStationPayload(channelId, (await response.json()) as Json);
+  return parseStationPayload(channelId, payload as Json);
 }
