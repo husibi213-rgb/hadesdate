@@ -19,17 +19,13 @@ import { Section } from "@/components/ui/section";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { SetupNotice } from "@/components/ui/setup-notice";
-import { ComparisonTable } from "@/components/analytics/comparison-table";
+import { MemberMonthCard } from "@/components/members/member-month-card";
 import { BroadcastCalendar } from "@/components/members/broadcast-calendar";
 import { CatchCard } from "@/components/catches/catch-card";
 import { DailySeriesChart } from "@/components/charts/daily-series-chart";
 
-import {
-  getDailyTotals,
-  getMemberComparison,
-  getMonthSummary,
-  getMonthlyTotals,
-} from "@/lib/queries/analytics";
+import { getDailyTotals, getMonthSummary, getMonthlyTotals } from "@/lib/queries/analytics";
+import { getMembers, getMemberStats } from "@/lib/queries/members";
 import { getTopCatches } from "@/lib/queries/catches";
 import { formatDuration, formatDurationShort, formatNumber } from "@/lib/utils/format";
 
@@ -67,14 +63,22 @@ export default async function MonthlyArchivePage({ params }: Props) {
 
   const { from, to } = monthBounds(year, month);
 
-  const [summary, daily, comparison, topCatches, trend] = await Promise.all([
+  const [summary, daily, members, topCatches, trend] = await Promise.all([
     getMonthSummary(from, to),
     getDailyTotals(from, to),
-    getMemberComparison(from, to),
+    getMembers(),
     getTopCatches(from, to, 12),
     // 최근 12개월 추이
     getMonthlyTotals(`${year - 1}-${String(month).padStart(2, "0")}-01`, to),
   ]);
+
+  // 멤버별 그 달 기록 (비교표 대신 각자 카드로 보여준다)
+  const memberMonth = await Promise.all(
+    members.data.map(async (member) => ({
+      member,
+      stats: (await getMemberStats(member.id, from, to)).data,
+    }))
+  );
 
   if (summary.notConfigured) {
     return (
@@ -282,11 +286,24 @@ export default async function MonthlyArchivePage({ params }: Props) {
         </Section>
       </div>
 
-      <Section title="멤버 비교" description={`${year}년 ${month}월 기준`} href="/analytics">
-        {comparison.data.length === 0 ? (
-          <EmptyState title="비교할 데이터가 없습니다" />
+      <Section
+        title="멤버별 기록"
+        description={`${year}년 ${month}월 · 카드를 누르면 해당 멤버 상세로 이동합니다`}
+      >
+        {memberMonth.length === 0 ? (
+          <EmptyState title="등록된 멤버가 없습니다" />
         ) : (
-          <ComparisonTable rows={comparison.data} />
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {memberMonth.map(({ member, stats }) => (
+              <MemberMonthCard
+                key={member.id}
+                member={member}
+                stats={stats}
+                year={year}
+                month={month}
+              />
+            ))}
+          </div>
         )}
       </Section>
 

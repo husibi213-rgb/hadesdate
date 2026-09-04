@@ -1,38 +1,40 @@
-import { MousePointerClick, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { MousePointerClick, ShieldCheck, Users } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { Section } from "@/components/ui/section";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { FilterTabs } from "@/components/ui/filter-tabs";
+import { MemberAvatar } from "@/components/ui/member-avatar";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { SetupNotice } from "@/components/ui/setup-notice";
 import { HourlyBarChart } from "@/components/charts/hourly-bar-chart";
-import { Table, TableWrap, Td, Th, Tr } from "@/components/ui/table";
 
-import { getClickBreakdown, getClickHourly, getMemberComparison } from "@/lib/queries/analytics";
+import { getMemberClickBreakdown, getMemberClickHourly } from "@/lib/queries/analytics";
+import { getMembers } from "@/lib/queries/members";
 import { buildPeriodTabs, periodRange } from "@/lib/utils/period";
+import { buildMemberTabs, memberKey, resolveMember } from "@/lib/utils/member-nav";
 import { CLICK_TARGET_LABELS } from "@/lib/constants";
 import { formatNumber } from "@/lib/utils/format";
-import Link from "next/link";
 
 export const metadata = { title: "클릭 분석" };
 
+/**
+ * 클릭 분석 = 한 멤버씩 본다.
+ * 멤버끼리 클릭 수를 줄세우던 순위표는 두지 않는다.
+ */
 export default async function ClicksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; member?: string }>;
 }) {
-  const { period } = await searchParams;
+  const { period, member: memberParam } = await searchParams;
   const range = periodRange(period ?? "7d");
 
-  const [breakdown, hourly, comparison] = await Promise.all([
-    getClickBreakdown(range.from, range.to),
-    getClickHourly(range.from, range.to),
-    getMemberComparison(range.from, range.to),
-  ]);
+  const members = await getMembers();
 
-  if (breakdown.notConfigured) {
+  if (members.notConfigured) {
     return (
       <>
         <PageHeader title="클릭 분석" />
@@ -40,6 +42,29 @@ export default async function ClicksPage({
       </>
     );
   }
+
+  const selected = resolveMember(members.data, memberParam);
+
+  if (!selected) {
+    return (
+      <>
+        <PageHeader title="클릭 분석" />
+        {members.error ? <ErrorState description={members.error} /> : null}
+        <EmptyState
+          title="등록된 멤버가 없습니다"
+          description="멤버가 등록되면 멤버별 클릭 통계를 볼 수 있습니다."
+          icon={<Users className="size-5" />}
+        />
+      </>
+    );
+  }
+
+  const key = memberKey(selected);
+
+  const [breakdown, hourly] = await Promise.all([
+    getMemberClickBreakdown(selected.id, range.from, range.to),
+    getMemberClickHourly(selected.id, range.from, range.to),
+  ]);
 
   const total = breakdown.data.reduce((s, r) => s + r.click_count, 0);
   const uniqueSessions = breakdown.data.reduce((s, r) => s + r.unique_sessions, 0);
@@ -50,17 +75,42 @@ export default async function ClicksPage({
     clicks: hourlyMap.get(h) ?? 0,
   }));
 
-  const memberClicks = [...comparison.data]
-    .filter((row) => row.click_count > 0)
-    .sort((a, b) => b.click_count - a.click_count);
+  const busiestHour = hourly.data.reduce<{ hour: number; click_count: number } | null>(
+    (best, row) => (best === null || row.click_count > best.click_count ? row : best),
+    null
+  );
 
   return (
     <>
       <PageHeader
         title="클릭 분석"
-        description={`${range.label} 기준 · 익명 집계`}
-        actions={<FilterTabs items={buildPeriodTabs("/clicks", range.key)} activeKey={range.key} />}
+        description={`${selected.name} · ${range.label} 기준 · 익명 집계`}
+        actions={
+          <FilterTabs
+            items={buildPeriodTabs("/clicks", range.key, `member=${encodeURIComponent(key)}`)}
+            activeKey={range.key}
+          />
+        }
       />
+
+      <div className="flex flex-wrap items-center gap-2">
+        <MemberAvatar
+          name={selected.name}
+          imageUrl={selected.profile_image_url}
+          color={selected.color}
+          size="sm"
+        />
+        <FilterTabs
+          items={buildMemberTabs("/clicks", members.data, `period=${range.key}`)}
+          activeKey={key}
+        />
+        <Link
+          href={`/members/${key}`}
+          className="ml-auto text-[11px] text-fg-muted transition-colors hover:text-fg"
+        >
+          멤버 상세 보기 →
+        </Link>
+      </div>
 
       <div className="flex items-start gap-2 rounded-xl border border-border bg-surface/50 px-3.5 py-2.5 text-[11px] leading-relaxed text-fg-muted">
         <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-up" />
@@ -72,7 +122,7 @@ export default async function ClicksPage({
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
-          label="전체 클릭"
+          label="클릭"
           value={formatNumber(total)}
           icon={<MousePointerClick className="size-3.5" />}
         />
@@ -81,10 +131,13 @@ export default async function ClicksPage({
           label="세션당 클릭"
           value={uniqueSessions > 0 ? (total / uniqueSessions).toFixed(1) : "-"}
         />
-        <StatCard label="집계 대상 멤버" value={formatNumber(memberClicks.length)} unit="명" />
+        <StatCard
+          label="가장 많은 시간대"
+          value={busiestHour ? `${String(busiestHour.hour).padStart(2, "0")}시` : "-"}
+        />
       </div>
 
-      <Section title="타겟별 클릭">
+      <Section title="타겟별 클릭" description={`${selected.name} 관련 링크 기준`}>
         {breakdown.data.length === 0 ? (
           <EmptyState title="클릭 데이터가 없습니다" />
         ) : (
@@ -104,7 +157,10 @@ export default async function ClicksPage({
                       </span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-surface-3">
-                      <div className="h-full rounded-full bg-accent" style={{ width: `${ratio}%` }} />
+                      <div
+                        className="h-full rounded-full bg-accent"
+                        style={{ width: `${ratio}%` }}
+                      />
                     </div>
                   </div>
                 );
@@ -124,42 +180,6 @@ export default async function ClicksPage({
             )}
           </CardContent>
         </Card>
-      </Section>
-
-      <Section title="멤버별 클릭">
-        {memberClicks.length === 0 ? (
-          <EmptyState title="멤버별 클릭 데이터가 없습니다" />
-        ) : (
-          <TableWrap>
-            <Table className="min-w-[480px]">
-              <thead>
-                <tr>
-                  <Th>멤버</Th>
-                  <Th className="text-right">클릭</Th>
-                  <Th className="text-right">방송</Th>
-                  <Th className="text-right">캐치</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {memberClicks.map((row) => (
-                  <Tr key={row.member_id}>
-                    <Td>
-                      <Link
-                        href={`/members/${row.slug ?? row.member_id}`}
-                        className="font-medium text-fg transition-colors hover:text-accent"
-                      >
-                        {row.name}
-                      </Link>
-                    </Td>
-                    <Td className="tnum text-right">{formatNumber(row.click_count)}</Td>
-                    <Td className="tnum text-right">{formatNumber(row.broadcast_count)}</Td>
-                    <Td className="tnum text-right">{formatNumber(row.catch_count)}</Td>
-                  </Tr>
-                ))}
-              </tbody>
-            </Table>
-          </TableWrap>
-        )}
       </Section>
     </>
   );

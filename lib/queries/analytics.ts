@@ -7,7 +7,6 @@ import type {
   ClickHourlyRow,
   DailySummary,
   DailyTotalRow,
-  MemberComparisonRow,
   MonthSummary,
   MonthlyTotalRow,
   ViewerSeriesPoint,
@@ -44,16 +43,6 @@ export async function getViewerSeriesForDate(
   });
 }
 
-export async function getMemberComparison(
-  from: string | null,
-  to: string | null
-): Promise<QueryResult<MemberComparisonRow[]>> {
-  return guard<MemberComparisonRow[]>([], async () => {
-    const supabase = await createClient();
-    return callRpc<MemberComparisonRow[]>(supabase, "member_comparison", { p_from: from, p_to: to });
-  });
-}
-
 export async function getClickBreakdown(
   from: string | null,
   to: string | null
@@ -64,6 +53,22 @@ export async function getClickBreakdown(
   });
 }
 
+/** 한 멤버의 타겟별 클릭 (멤버별 보기 전용) */
+export async function getMemberClickBreakdown(
+  memberId: string,
+  from: string | null,
+  to: string | null
+): Promise<QueryResult<ClickBreakdownRow[]>> {
+  return guard<ClickBreakdownRow[]>([], async () => {
+    const supabase = await createClient();
+    return callRpc<ClickBreakdownRow[]>(supabase, "member_click_breakdown", {
+      p_member_id: memberId,
+      p_from: from,
+      p_to: to,
+    });
+  });
+}
+
 export async function getClickHourly(
   from: string | null,
   to: string | null
@@ -71,6 +76,22 @@ export async function getClickHourly(
   return guard<ClickHourlyRow[]>([], async () => {
     const supabase = await createClient();
     return callRpc<ClickHourlyRow[]>(supabase, "click_hourly", { p_from: from, p_to: to });
+  });
+}
+
+/** 한 멤버의 시간대별 클릭 (KST) */
+export async function getMemberClickHourly(
+  memberId: string,
+  from: string | null,
+  to: string | null
+): Promise<QueryResult<ClickHourlyRow[]>> {
+  return guard<ClickHourlyRow[]>([], async () => {
+    const supabase = await createClient();
+    return callRpc<ClickHourlyRow[]>(supabase, "member_click_hourly", {
+      p_member_id: memberId,
+      p_from: from,
+      p_to: to,
+    });
   });
 }
 

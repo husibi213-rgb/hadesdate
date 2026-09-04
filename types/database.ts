@@ -286,6 +286,14 @@ export interface Database {
         Args: { p_from?: string | null; p_to?: string | null };
         Returns: ClickHourlyRow[];
       };
+      member_click_breakdown: {
+        Args: { p_member_id: string; p_from?: string | null; p_to?: string | null };
+        Returns: ClickBreakdownRow[];
+      };
+      member_click_hourly: {
+        Args: { p_member_id: string; p_from?: string | null; p_to?: string | null };
+        Returns: ClickHourlyRow[];
+      };
       broadcast_click_breakdown: {
         Args: { p_broadcast_id: string };
         Returns: ClickBreakdownRow[];

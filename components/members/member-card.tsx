@@ -1,24 +1,22 @@
+import { ChevronRight } from "lucide-react";
+
 import type { MemberRow } from "@/types/database";
 
 import { TrackedLink } from "@/components/analytics/tracked-link";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import { LiveBadge } from "@/components/ui/badge";
-import { formatHours, formatNumber } from "@/lib/utils/format";
 
-export interface MemberCardStats {
-  broadcastCount: number;
-  totalDurationSeconds: number;
-  avgViewers: number;
-  peakViewers: number;
-}
-
+/**
+ * 멤버 선택 카드.
+ *
+ * 예전에는 카드마다 평균/최고 시청자를 찍어 5명이 한 화면에서 비교되는 형태였다.
+ * 지금은 "한 멤버를 고르는" 관문 역할만 하고, 수치는 멤버 상세에서 본다.
+ */
 export function MemberCard({
   member,
-  stats,
   isLive = false,
 }: {
   member: MemberRow;
-  stats?: MemberCardStats;
   isLive?: boolean;
 }) {
   return (
@@ -27,41 +25,26 @@ export function MemberCard({
       targetType="profile"
       targetId={member.id}
       memberId={member.id}
-      className="flex flex-col gap-3 rounded-xl border border-border bg-surface/70 p-4 transition-colors hover:border-border-strong hover:bg-surface-2/50"
+      className="group flex items-center gap-3 rounded-xl border border-border bg-surface/70 p-4 transition-colors hover:border-border-strong hover:bg-surface-2/50"
     >
-      <div className="flex items-center gap-3">
-        <MemberAvatar
-          name={member.name}
-          imageUrl={member.profile_image_url}
-          color={member.color}
-          size="lg"
-        />
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold text-fg">{member.name}</span>
-            {isLive ? <LiveBadge /> : null}
-          </div>
-          <p className="tnum mt-0.5 text-[11px] text-fg-dim">
-            방송 {formatNumber(stats?.broadcastCount ?? 0)}회 ·{" "}
-            {formatHours(stats?.totalDurationSeconds ?? 0)}
-          </p>
+      <MemberAvatar
+        name={member.name}
+        imageUrl={member.profile_image_url}
+        color={member.color}
+        size="lg"
+      />
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-sm font-semibold text-fg">{member.name}</span>
+          {isLive ? <LiveBadge /> : null}
         </div>
+        {member.channel_id ? (
+          <p className="mt-0.5 truncate text-[11px] text-fg-dim">{member.channel_id}</p>
+        ) : null}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 border-t border-border pt-3">
-        <div>
-          <div className="text-[10px] tracking-wide text-fg-dim uppercase">평균 시청자</div>
-          <div className="tnum text-sm font-semibold text-fg">
-            {formatNumber(stats?.avgViewers ?? 0)}
-          </div>
-        </div>
-        <div>
-          <div className="text-[10px] tracking-wide text-fg-dim uppercase">최고 시청자</div>
-          <div className="tnum text-sm font-semibold text-fg">
-            {formatNumber(stats?.peakViewers ?? 0)}
-          </div>
-        </div>
-      </div>
+      <ChevronRight className="size-4 shrink-0 text-fg-dim transition-colors group-hover:text-fg" />
     </TrackedLink>
   );
 }
