@@ -1,4 +1,4 @@
-import { envValue } from "@/lib/env";
+import { envValue, PUBLIC_SITE_URL } from "@/lib/env";
 
 /**
  * 사이트 절대 URL.
@@ -6,8 +6,7 @@ import { envValue } from "@/lib/env";
  * 그것도 없으면 로컬 주소로 떨어진다.
  */
 export function siteUrl(): string {
-  const explicit = envValue("NEXT_PUBLIC_SITE_URL");
-  if (explicit) return explicit.replace(/\/$/, "");
+  if (PUBLIC_SITE_URL) return PUBLIC_SITE_URL.replace(/\/$/, "");
 
   const vercel = envValue("VERCEL_PROJECT_PRODUCTION_URL") ?? envValue("VERCEL_URL");
   if (vercel) return `https://${vercel.replace(/\/$/, "")}`;
