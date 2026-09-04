@@ -1,0 +1,63 @@
+name: collect
+
+# SOOP 데이터 수집 스케줄러.
+#
+#   */5 * * * *   방송 상태 + 시청자 스냅샷  (GitHub Actions 최소 간격이 5분)
+#   */30 * * * *  다시보기 / 클립 / 캐치
+#   0 19 * * *    클릭 일일 집계 (UTC 19:00 = KST 04:00)
+#
+# 필요한 설정 (Settings > Secrets and variables > Actions)
+#   Variables: COLLECT_BASE_URL   예) https://hades-data.vercel.app
+#   Secrets:   COLLECT_SECRET     Vercel 환경변수와 같은 값
+#
+# GitHub 의 cron 은 혼잡할 때 몇 분 밀릴 수 있다. 정확한 주기가 필요하면
+# PC 작업 스케줄러로 `node scripts/collect.mjs` 를 함께 돌리면 된다.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+    - cron: "*/30 * * * *"
+    - cron: "0 19 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "수동 실행 모드"
+        required: true
+        default: sync
+        type: choice
+        options: [sync, vods, rollup]
+
+concurrency:
+  group: collect-${{ github.event.schedule || github.event.inputs.mode }}
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 수집 실행
+        env:
+          COLLECT_BASE_URL: ${{ vars.COLLECT_BASE_URL }}
+          COLLECT_SECRET: ${{ secrets.COLLECT_SECRET }}
+        run: |
+          if [ -z "$COLLECT_BASE_URL" ]; then
+            echo "::error::COLLECT_BASE_URL 변수가 설정되지 않았습니다 (Settings > Variables)"
+            exit 1
+          fi
+
+          case "${{ github.event.schedule }}" in
+            "*/30 * * * *") MODE=vods ;;
+            "0 19 * * *")   MODE=rollup ;;
+            "*/5 * * * *")  MODE=sync ;;
+            *)              MODE="${{ github.event.inputs.mode || 'sync' }}" ;;
+          esac
+
+          echo "모드: $MODE"
+          node scripts/collect.mjs "$MODE"
