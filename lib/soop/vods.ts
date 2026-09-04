@@ -55,8 +55,9 @@ export interface SoopVodItem {
   url: string;
   thumbnailUrl: string | null;
   /**
-   * 초 단위 길이. 원본 `ucc_duration` 은 밀리초로 확인됐다 (클립 75050 → 75초).
-   * DB 에 저장하지는 않고 probe 출력에만 쓰므로, 값이 이상하면 여기만 보면 된다.
+   * 초 단위 길이(= 다시보기면 방송시간).
+   * 실제 응답에서 확인된 필드는 `ucc.total_file_duration` 이고 단위는 밀리초다.
+   * (예: 10716234 → 2시간 58분) 계정마다 필드명이 다를 수 있어 후보를 순서대로 본다.
    */
   durationSeconds: number | null;
   /** 게시물 조회수 */
@@ -116,7 +117,12 @@ export function parseVodItem(raw: Json): SoopVodItem | null {
     normalizeUrl(str(raw.thumbnail)) ??
     (ucc ? normalizeUrl(str(ucc.thumb) ?? str(ucc.thumbnail)) : null);
 
-  const durationRaw = num(raw.ucc_duration) ?? (ucc ? num(ucc.duration) : null);
+  // 확인된 필드는 ucc.total_file_duration (밀리초). 나머지는 예비 후보.
+  const durationRaw =
+    (ucc ? num(ucc.total_file_duration) : null) ??
+    num(raw.total_file_duration) ??
+    num(raw.ucc_duration) ??
+    (ucc ? num(ucc.duration) : null);
 
   return {
     titleNo,

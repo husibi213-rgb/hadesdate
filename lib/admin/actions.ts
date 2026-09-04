@@ -18,6 +18,7 @@ import {
 } from "@/lib/admin/session";
 import { runSync } from "@/lib/collect/run-sync";
 import { runVodsCollect } from "@/lib/collect/run-vods";
+import { runBackfill } from "@/lib/collect/run-backfill";
 import { fromDateTimeInput } from "@/lib/utils/datetime-input";
 import {
   checked,
@@ -266,6 +267,37 @@ export async function triggerVods(): Promise<never> {
   });
 }
 
+/**
+ * 지난 방송 백필. 폼에서 기간(YYYY-MM-DD)을 받는다.
+ * 같은 구간을 여러 번 돌려도 이미 들어간 방송은 건너뛴다.
+ */
+export async function triggerBackfill(form: FormData): Promise<never> {
+  const from = text(form, "from") ?? "";
+  const to = text(form, "to") ?? "";
+
+  return run("/admin", "지난 방송 백필", async () => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      throw new Error("기간은 YYYY-MM-DD 형식으로 입력해 주세요.");
+    }
+    if (from > to) throw new Error("시작일이 종료일보다 뒤입니다.");
+
+    const result = await runBackfill(from, to, 6);
+    const inserted = result.results.reduce((sum, r) => sum + r.inserted, 0);
+    const skipped = result.results.reduce((sum, r) => sum + r.skipped, 0);
+    const missing = result.results.reduce((sum, r) => sum + r.missingDuration, 0);
+    const failed = result.results.filter((r) => r.error);
+
+    const note = [
+      skipped ? `이미 있음 ${skipped}` : null,
+      missing ? `방송시간 없음 ${missing}` : null,
+      failed.length ? `실패 ${failed.map((r) => r.channelId).join(", ")}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    return `백필 완료 (${from} ~ ${to}) — 방송 +${inserted}${note ? ` · ${note}` : ""}`;
+  });
+}
 
 /* ------------------------------ 오류 로그 ----------------------------- */
 

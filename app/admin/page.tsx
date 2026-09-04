@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { AlertTriangle, Database, Megaphone, Radio, RefreshCw, Scissors, Users } from "lucide-react";
+import { AlertTriangle, Database, History, Megaphone, Radio, RefreshCw, Scissors, Users } from "lucide-react";
 
 import { adminGate } from "@/lib/admin/session";
 import { getAdminOverview, getRecentErrorCount } from "@/lib/admin/queries";
 import { loadAdmin } from "@/lib/admin/load";
-import { triggerSync, triggerVods } from "@/lib/admin/actions";
+import { triggerBackfill, triggerSync, triggerVods } from "@/lib/admin/actions";
 import { LoginScreen } from "@/components/admin/login-screen";
-import { Button, FormNotice } from "@/components/admin/form";
+import { Button, FormNotice, Input } from "@/components/admin/form";
 import { ErrorState } from "@/components/ui/states";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -112,6 +112,40 @@ export default async function AdminHomePage({
                 </Button>
               </form>
             </div>
+            <div className="space-y-2 border-t border-border pt-3">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-fg-muted">
+                <History className="size-3.5" />
+                지난 방송 백필
+              </div>
+              <form action={triggerBackfill} className="flex flex-wrap items-center gap-2">
+                <Input
+                  type="date"
+                  name="from"
+                  defaultValue="2026-08-01"
+                  required
+                  className="w-auto"
+                  aria-label="시작일"
+                />
+                <span className="text-xs text-fg-dim">~</span>
+                <Input
+                  type="date"
+                  name="to"
+                  defaultValue="2026-08-31"
+                  required
+                  className="w-auto"
+                  aria-label="종료일"
+                />
+                <Button variant="ghost" type="submit">
+                  백필 실행
+                </Button>
+              </form>
+              <p className="text-[11px] leading-relaxed text-fg-dim">
+                다시보기 목록으로 과거 방송 기록을 되살립니다. 방송 날짜·제목·방송시간·조회수는
+                채워지지만, 평균/최고 시청자는 방송 중 스냅샷이 있어야만 알 수 있어 0 으로 남습니다.
+                같은 구간을 다시 돌려도 이미 들어간 방송은 건너뜁니다.
+              </p>
+            </div>
+
             <p className="text-[11px] leading-relaxed text-fg-dim">
               여기서 한 번 돌려보고, 실제 운영에서는{" "}
               <code className="text-fg-muted">node scripts/collect.mjs</code> 를 스케줄러에

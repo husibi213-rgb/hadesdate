@@ -20,6 +20,7 @@ import {
   text,
 } from "@/lib/admin/form-data";
 import { fingerprintOf } from "@/lib/monitor/log-error";
+import { backfillExternalId, planBroadcastFromReplay } from "@/lib/collect/run-backfill";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,6 +71,15 @@ export async function GET(request: Request) {
         reg_date: "2026-09-01 10:00:00",
         display: { bbs_name: "Something Else" },
       },
+      {
+        title_no: 206110791,
+        board_type: 105,
+        title_name: "[하데스] 우리 여르미",
+        reg_date: "2026-09-03 18:59:38",
+        display: { bbs_name: "다시보기" },
+        count: { like_cnt: 30, read_cnt: 21342, vod_read_cnt: 1725 },
+        ucc: { total_file_duration: 10716234 },
+      },
       { no_title_no: true },
     ],
     catch_story: [
@@ -87,13 +97,13 @@ export async function GET(request: Request) {
 
   const page = parseVodPayload(payload);
 
-  eq("게시물 4건만 파싱 (title_no 없는 항목 제외)", page.items.length, 4);
+  eq("게시물 5건만 파싱 (title_no 없는 항목 제외)", page.items.length, 5);
   eq("meta.total", page.total, 860);
   eq("meta.last_page", page.lastPage, 43);
   eq("Replay 분류", page.items[0].kind, "replay");
   eq("Star Balloon Clip 분류", page.items[1].kind, "clip");
   eq("미확인 게시판 분류", page.items[2].kind, "other");
-  eq("catch_story 흡수 + 캐치 분류", page.items[3].kind, "catch");
+  eq("catch_story 흡수 + 캐치 분류", page.items[4].kind, "catch");
   eq(
     "플레이어 URL",
     page.items[0].url,
@@ -110,6 +120,23 @@ export async function GET(request: Request) {
     "https://iflv14.sooplive.com/clip/20260903/287/abc/42847287_r.jpg"
   );
   eq("count 없을 때 read_cnt 폴백", page.items[1].readCount, 42);
+  // 실제 응답에서 방송시간이 오는 자리는 ucc.total_file_duration (밀리초)
+  eq("total_file_duration → 초", page.items[3].durationSeconds, 10716);
+  eq("다시보기 분류(한글 게시판명)", page.items[3].kind, "replay");
+
+  // ---------- 1-b. 지난 방송 백필 ----------
+  const planned = planBroadcastFromReplay("M-1", page.items[3]);
+  eq("백필 external_id 접두어", planned?.external_id, backfillExternalId("206110791"));
+  eq("백필 종료 = 게시 시각", planned?.ended_at, "2026-09-03T09:59:38.000Z");
+  // 종료(18:59:38 KST) − 2시간 58분 36초 = 16:01:02 KST
+  eq("백필 시작 = 종료 − 방송시간", planned?.started_at, "2026-09-03T07:01:02.000Z");
+  eq("백필 방송시간", planned?.duration_seconds, 10716);
+  eq("백필 조회수 = max(재생, 조회)", planned?.views, 21342);
+
+  const noDuration = planBroadcastFromReplay("M-1", { ...page.items[0], durationSeconds: null });
+  eq("길이 모르면 시작 = 종료", noDuration?.started_at, noDuration?.ended_at);
+  eq("길이 모르면 방송시간 null", noDuration?.duration_seconds, null);
+  eq("등록 시각 없으면 건너뜀", planBroadcastFromReplay("M-1", { ...page.items[0], registeredAt: null }), null);
 
   // ---------- 2. 방송 매칭 ----------
   const broadcasts = [
